@@ -709,11 +709,13 @@ def gfilterparser(text, keyword):
                 i += 1
                 alerts.append(match.group(4))
             elif bool(match.group(5)) and buttons:
+                LOGGER.error(f"BAD BUTTON URL = {match.group(4)}")
                 buttons[-1].append(InlineKeyboardButton(
                     text=match.group(2),
                     url=match.group(4).replace(" ", "")
                 ))
             else:
+                LOGGER.error(f"BAD BUTTON URL = {match.group(4)}")
                 buttons.append([InlineKeyboardButton(
                     text=match.group(2),
                     url=match.group(4).replace(" ", "")
@@ -761,11 +763,13 @@ def parser(text, keyword):
                 i += 1
                 alerts.append(match.group(4))
             elif bool(match.group(5)) and buttons:
+                LOGGER.error(f"BAD BUTTON URL = {match.group(4)}")
                 buttons[-1].append(InlineKeyboardButton(
                     text=match.group(2),
                     url=match.group(4).replace(" ", "")
                 ))
             else:
+                LOGGER.error(f"BAD BUTTON URL = {match.group(4)}")
                 buttons.append([InlineKeyboardButton(
                     text=match.group(2),
                     url=match.group(4).replace(" ", "")
