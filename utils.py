@@ -881,8 +881,8 @@ async def get_cap(settings, remaining_seconds, files, query, total_results, sear
                 cap = TEMPLATE.format(
                     qurey=search,
                     title=imdb['title'],
-                    votes=imdb['votes'],
-                    aka=imdb["aka"],
+                    votes=imdb.get("votes") or imdb.get("vote_count") or "N/A",
+                    aka=imdb["aka", "N/A"],
                     seasons=imdb["seasons"],
                     box_office=imdb['box_office'],
                     localized_title=imdb['localized_title'],
