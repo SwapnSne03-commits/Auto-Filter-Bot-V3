@@ -25,6 +25,12 @@ from info import LANDSCAPE_POSTER
 import unicodedata
 import difflib
 
+QUALITY_REGEX = re.compile(
+        r'\b(480p|720p|1080p|2160p|4k|8k|x264|x265|hevc|hdr|dvdrip|webrip|bluray|brrip|webdl)\b',
+        re.IGNORECASE
+)
+
+
 BTN_URL_REGEX = re.compile(
     r"(\[([^\[]+?)\]\((buttonurl|buttonalert):(?:/{0,2})(.+?)(:same)?\))"
 )
@@ -53,11 +59,7 @@ class temp(object):
     SHORT = {}
     IMDB_CAP = {}
     VERIFICATIONS = {}
-    QUALITY_REGEX = re.compile(
-        r'\b(480p|720p|1080p|2160p|4k|8k|x264|x265|hevc|hdr|dvdrip|webrip|bluray|brrip|webdl)\b',
-        re.IGNORECASE
-    )
-
+    
 def clean_search_query(query: str) -> str:
     query = QUALITY_REGEX.sub('', query)
     query = re.sub(r'\s+', ' ', query).strip()
