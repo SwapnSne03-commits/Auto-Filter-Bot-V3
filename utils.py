@@ -340,7 +340,7 @@ async def get_poster(query, bulk=False, id=False, file=None):
         
     return {
         'title': movie.title,
-        'votes': movie.votes,
+        'votes': movie.votes if hasattr(movie, "votes") and movie.votes else "N/A",
         "aka": listx_to_str(movie.title_akas),
         "seasons": (
             len(movie.info_series.display_seasons)
@@ -394,8 +394,8 @@ async def fetch_tmdb_data(title: str, year: str = None) -> Optional[Dict[str, An
                     "kind": data.get("type", "Movie").upper(),
                     "director": await get_director_from_crew(data.get("crew", [])),
                     "release_date": data.get("release_date", ""),
-                    "vote_average": f"{data['vote_average']:.1f}" if data.get("vote_average") else "N/A",
-                    "vote_count": f"{data['vote_count']:,}" if data.get("vote_count") else "0",
+                    "vote_average": f"{float(data.get('vote_average')):.1f}" if data.get("vote_average") not in (None, "", 0) else "N/A",
+                    "vote_count": f"{int(data.get('vote_count', 0)):,}",
                     "genres": data.get("genres", []),
                     "imdb_id": data.get("imdb_id", ""),
                     "imdb_url": f"https://www.imdb.com/title/{data.get('imdb_id')}/" if data.get("imdb_id") else "",
