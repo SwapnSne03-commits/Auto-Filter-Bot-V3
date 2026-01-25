@@ -72,6 +72,7 @@ async def broadcast_users(bot, message):
             batch.append(user)
             if len(batch) >= BATCH_SIZE:
                 results = await asyncio.gather(*[send(u) for u in batch])
+                await asyncio.sleep(0.4)
                 for res in results:
                     if res == "Success": success += 1
                     elif res == "Blocked": blocked += 1
@@ -102,6 +103,7 @@ async def broadcast_users(bot, message):
                     
         if batch and not cancelled:
              results = await asyncio.gather(*[send(u) for u in batch])
+             await asyncio.sleep(0.4) 
              for res in results:
                 if res == "Success": success += 1
                 elif res == "Blocked": blocked += 1
