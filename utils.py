@@ -261,6 +261,7 @@ async def get_poster(query, bulk=False, id=False, file=None):
                 year_val = year_list[0]
         
         #search_result = await asyncio.to_thread(imdb.search_movie, title.lower()) 👇IMDB 8sec search then transfer to tmdb
+        movie_list = []
         try:
             search_result = await asyncio.wait_for(
                 asyncio.to_thread(imdb.search_movie, title.lower()),
@@ -273,16 +274,31 @@ async def get_poster(query, bulk=False, id=False, file=None):
             LOGGER.info(f"IMDb empty, fallback to TMDB: {title}")
             return await fetch_tmdb_data(title, year_val) #imdb 8sec search then transfer to TMDB
         
-        #movie_list = search_result.titles (👇 Exact movie name 1st priority)
+        movie_list = search_result.titles #(👇 Exact movie name 1st priority)
         movie_list = prioritize_movie(movie_list)
         movie_list = rank_by_exact_match(movie_list, title)
+
+        # ✅ 🔒 SAFETY GUARD (এখানেই বসাবে)
+        if not movie_list:
+            LOGGER.info(f"IMDb movie_list empty, fallback to TMDB: {title}")
+            return await fetch_tmdb_data(title, year_val)
         
+        #if year_val:
+            #filtered = [m for m in movie_list if m.year and str(m.year) == str(year_val)]
+            #if not filtered:
+                #filtered = movie_list
+        # ✅ Year priority (soft, safe)
         if year_val:
-            filtered = [m for m in movie_list if m.year and str(m.year) == str(year_val)]
-            if not filtered:
-                filtered = movie_list
-        else:
-            filtered = movie_list
+            year_filtered = [
+                m for m in movie_list
+                if getattr(m, "year", None) and str(m.year) == str(year_val)
+            ]
+
+            # year মিললে সেটাই নাও, না মিললে আগের priority রাখো
+            if year_filtered:
+                movie_list = year_filtered
+        #else:
+            #filtered = movie_list
             
         kind_filter = ['movie', 'tv series', 'tvSeries', 'tvMiniSeries', 'tvMovie']
         filtered_kind = [m for m in filtered if m.kind and m.kind in kind_filter]
