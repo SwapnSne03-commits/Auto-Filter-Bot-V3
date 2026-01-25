@@ -53,7 +53,16 @@ class temp(object):
     SHORT = {}
     IMDB_CAP = {}
     VERIFICATIONS = {}
+    QUALITY_REGEX = re.compile(
+        r'\b(480p|720p|1080p|2160p|4k|8k|x264|x265|hevc|hdr|dvdrip|webrip|bluray|brrip|webdl)\b',
+        re.IGNORECASE
+    )
 
+def clean_search_query(query: str) -> str:
+    query = QUALITY_REGEX.sub('', query)
+    query = re.sub(r'\s+', ' ', query).strip()
+    return query
+    
 def normalize_title(text: str) -> str:
     if not text:
         return ""
@@ -247,6 +256,7 @@ def listx_to_str(k):
 
 async def get_poster(query, bulk=False, id=False, file=None):
     if not id:
+        query = clean_search_query(query)
         query = (query.strip()).lower()
         title = query
         year_val = None
