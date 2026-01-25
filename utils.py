@@ -301,7 +301,7 @@ async def get_poster(query, bulk=False, id=False, file=None):
             #filtered = movie_list
             
         kind_filter = ['movie', 'tv series', 'tvSeries', 'tvMiniSeries', 'tvMovie']
-        filtered_kind = [m for m in filtered if m.kind and m.kind in kind_filter]
+        filtered_kind = [m for m in movie_list if m.kind and m.kind in kind_filter]
         
         if not filtered_kind:
             filtered_kind = movie_list
