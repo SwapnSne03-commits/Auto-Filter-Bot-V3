@@ -52,6 +52,11 @@ class temp(object):
     IMDB_CAP = {}
     VERIFICATIONS = {}
 
+def prioritize_movie(results):
+    movies = [m for m in results if m.kind == "movie"]
+    tvs = [m for m in results if m.kind != "movie"]
+    return movies + tvs
+
 def get_main_buttons():
     return [
         [
@@ -228,6 +233,7 @@ async def get_poster(query, bulk=False, id=False, file=None):
             return None
         
         movie_list = search_result.titles
+        movie_list = prioritize_movie(movie_list)
         
         if year_val:
             filtered = [m for m in movie_list if m.year and str(m.year) == str(year_val)]
