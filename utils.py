@@ -22,6 +22,8 @@ import http.client
 import json
 from logging_helper import LOGGER
 from info import LANDSCAPE_POSTER
+import unicodedata
+import difflib
 
 BTN_URL_REGEX = re.compile(
     r"(\[([^\[]+?)\]\((buttonurl|buttonalert):(?:/{0,2})(.+?)(:same)?\))"
@@ -52,6 +54,36 @@ class temp(object):
     IMDB_CAP = {}
     VERIFICATIONS = {}
 
+def normalize_title(text: str) -> str:
+    if not text:
+        return ""
+    text = unicodedata.normalize("NFKD", text)
+    text = text.encode("ascii", "ignore").decode("ascii")
+    text = text.lower()
+    text = re.sub(r"[^a-z0-9\s]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return text
+
+
+def rank_by_exact_match(results, user_query):
+    q = normalize_title(user_query)
+
+    exact = []
+    close = []
+    others = []
+
+    for m in results:
+        title = normalize_title(m.title)
+
+        if title == q:
+            exact.append(m)
+        elif q in title or title in q:
+            close.append(m)
+        else:
+            others.append(m)
+
+    return exact + close + others
+    
 def prioritize_movie(results):
     movies = [m for m in results if m.kind == "movie"]
     tvs = [m for m in results if m.kind != "movie"]
@@ -94,7 +126,7 @@ async def users_broadcast(user_id, message, is_pin):
         [
             [
                 InlineKeyboardButton(
-                    "🔍 Search Here",
+                    "🔍 sᴇᴀʀᴄʜ ʜᴇʀᴇ",
                     url="https://t.me/Graduate_Request_Pro"
                 )
             ]
@@ -132,7 +164,7 @@ async def groups_broadcast(chat_id, message, is_pin):
         [
             [
                 InlineKeyboardButton(
-                    "🔍 Search Here",
+                    "🔍 sᴇᴀʀᴄʜ ʜᴇʀᴇ",
                     url="https://t.me/Graduate_Request_Pro"
                 )
             ]
@@ -228,12 +260,22 @@ async def get_poster(query, bulk=False, id=False, file=None):
             if year_list:
                 year_val = year_list[0]
         
-        search_result = await asyncio.to_thread(imdb.search_movie, title.lower())
+        #search_result = await asyncio.to_thread(imdb.search_movie, title.lower()) 👇IMDB 8sec search then transfer to tmdb
+        try:
+            search_result = await asyncio.wait_for(
+                asyncio.to_thread(imdb.search_movie, title.lower()),
+                timeout=8
+            )
+        except asyncio.TimeoutError:
+            LOGGER.warning(f"IMDb search timeout: {title}")
+            search_result = None
         if not search_result or not search_result.titles:
-            return None
+            LOGGER.info(f"IMDb empty, fallback to TMDB: {title}")
+            return await fetch_tmdb_data(title, year_val) #imdb 8sec search then transfer to TMDB
         
-        movie_list = search_result.titles
+        #movie_list = search_result.titles (👇 Exact movie name 1st priority)
         movie_list = prioritize_movie(movie_list)
+        movie_list = rank_by_exact_match(movie_list, title)
         
         if year_val:
             filtered = [m for m in movie_list if m.year and str(m.year) == str(year_val)]
@@ -256,9 +298,18 @@ async def get_poster(query, bulk=False, id=False, file=None):
     else:
         movieid_str = query
 
-    movie = await asyncio.to_thread(imdb.get_movie, movieid_str)
+    #movie = await asyncio.to_thread(imdb.get_movie, movieid_str) [Game of Thrones hang problem solved 👇)
+    try:
+        movie = await asyncio.wait_for(
+            asyncio.to_thread(imdb.get_movie, movieid_str),
+            timeout=8
+        )
+    except asyncio.TimeoutError:
+        LOGGER.warning(f"IMDb get_movie timeout: {movieid_str}")
+        return await fetch_tmdb_data(title, year_val)
     if not movie:
-        return None
+        LOGGER.info(f"IMDb get_movie empty: {movieid_str}")
+        return await fetch_tmdb_data(title, year_val) #the end 
 
     if movie.release_date:
         date = movie.release_date
