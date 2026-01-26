@@ -788,48 +788,62 @@ async def cb_handler(client: Client, query: CallbackQuery):
     elif query.data.startswith("killfilesdq"):
         _, keyword = query.data.split("#")
 
-        await query.message.edit_text(
-            f"<b>Fetching files for: <code>{keyword}</code></b>"
-        )
+        if query.from_user.id not in ADMINS:
+            return await query.answer("❌ Not allowed", show_alert=True)
+
+        await query.answer("⏳ Processing...", show_alert=False)
+        try:
+            await query.message.edit_text(
+                f"<b>Fetching files for: <code>{keyword}</code></b>"
+            )
+        except MessageNotModified:
+            pass
 
         files, total = await get_bad_files(keyword)
 
         if not files:
-            return await query.message.edit_text(
-                "<b>No files found.</b>"
-            )
+            try:
+                return await query.message.edit_text("<b>No files found.</b>")
+            except MessageNotModified:
+                return
 
-        await query.message.edit_text(
-            f"<b>Found {len(files)} files.\nDeleting in 3 seconds...</b>"
-        )
+        try:
+            await query.message.edit_text(
+                f"<b>Found {len(files)} files.\nDeleting in 3 seconds...</b>"
+            )
+        except MessageNotModified:
+            pass
+
         await asyncio.sleep(3)
 
         try:
             file_ids = [file.file_id for file in files]
 
-            result1 = await Media.collection.delete_many({
-                "_id": {"$in": file_ids}
-            })
-
-            deleted = result1.deleted_count
+            result1 = await Media.collection.delete_many({"_id": {"$in": file_ids}})
+            deleted = result1.deleted_count if result1 else 0
 
             if MULTIPLE_DB:
-                result2 = await Media2.collection.delete_many({
-                    "_id": {"$in": file_ids}
-                })
-                deleted += result2.deleted_count
+                result2 = await Media2.collection.delete_many({"_id": {"$in": file_ids}})
+                deleted += result2.deleted_count if result2 else 0
 
             LOGGER.info(f"Deleted {deleted} files for keyword: {keyword}")
 
-            await query.message.edit_text(
-                f"<b>✅ Successfully deleted {deleted} files\nfor query: <code>{keyword}</code></b>"
-            )
+            try:
+                await query.message.edit_text(
+                    f"<b>✅ Successfully deleted {deleted} files\nfor query: <code>{keyword}</code></b>"
+                )
+            except MessageNotModified:
+                pass
 
         except Exception as e:
             LOGGER.exception("Error in killfilesdq")
-            await query.message.edit_text(
-                "<b>❌ Error occurred while deleting files.</b>"
-		    )
+            try:
+                await query.message.edit_text(
+                    "<b>❌ Error occurred while deleting files.</b>"
+                )
+            except MessageNotModified:
+                pass
+    
     elif query.data.startswith("show_option"):
         ident, from_user = query.data.split("#")
         btn = [[
