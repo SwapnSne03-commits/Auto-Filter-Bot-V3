@@ -757,7 +757,7 @@ async def cb_handler(client: Client, query: CallbackQuery):
         except PeerIdInvalid:
             await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles3_{key}")
         except Exception as e:
-            logger.exception(e)
+            LOGGER.exception("Error in delete callback")
             await query.answer(url=f"https://telegram.me/{temp.U_NAME}?start=sendfiles4_{key}")
             
     elif query.data.startswith("del"):
