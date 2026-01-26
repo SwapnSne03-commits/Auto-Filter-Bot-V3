@@ -786,35 +786,50 @@ async def cb_handler(client: Client, query: CallbackQuery):
         await query.answer()    
     
     elif query.data.startswith("killfilesdq"):
-        ident, keyword = query.data.split("#")
-        await query.message.edit_text(f"<b>Fetching Files for your query {keyword} on DB... Please wait...</b>")
-        files, total = await get_bad_files(keyword)
-        await query.message.edit_text("<b>ꜰɪʟᴇ ᴅᴇʟᴇᴛɪᴏɴ ᴘʀᴏᴄᴇꜱꜱ ᴡɪʟʟ ꜱᴛᴀʀᴛ ɪɴ 5 ꜱᴇᴄᴏɴᴅꜱ !</b>")
-        await asyncio.sleep(5)
-        deleted = 0
-        async with lock:
-            try:
-                for file in files:
-                    file_ids = file.file_id
-                    file_name = file.file_name
-                    result = await Media.collection.delete_one({
-                        '_id': file_ids,
-                    })
-                    if not result.deleted_count and MULTIPLE_DB:
-                        result = await Media2.collection.delete_one({
-                            '_id': file_ids,
-                        })
-                    if result.deleted_count:
-                        logger.info(f'ꜰɪʟᴇ ꜰᴏᴜɴᴅ ꜰᴏʀ ʏᴏᴜʀ ǫᴜᴇʀʏ {keyword}! ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ {file_name} ꜰʀᴏᴍ ᴅᴀᴛᴀʙᴀꜱᴇ.')
-                    deleted += 1
-                    if deleted % 20 == 0:
-                        await query.message.edit_text(f"<b>ᴘʀᴏᴄᴇꜱꜱ ꜱᴛᴀʀᴛᴇᴅ ꜰᴏʀ ᴅᴇʟᴇᴛɪɴɢ ꜰɪʟᴇꜱ ꜰʀᴏᴍ ᴅʙ. ꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ {str(deleted)} ꜰɪʟᴇꜱ ꜰʀᴏᴍ ᴅʙ ꜰᴏʀ ʏᴏᴜʀ ǫᴜᴇʀʏ {keyword} !\n\nᴘʟᴇᴀꜱᴇ ᴡᴀɪᴛ...</b>")
-            except Exception as e:
-                LOGGER.error(f"Error In killfiledq -{e}")
-                await query.message.edit_text(f'Error: {e}')
-            else:
-                await query.message.edit_text(f"<b>ᴘʀᴏᴄᴇꜱꜱ ᴄᴏᴍᴘʟᴇᴛᴇᴅ ꜰᴏʀ ꜰɪʟᴇ ᴅᴇʟᴇᴛᴀᴛɪᴏɴ !\n\nꜱᴜᴄᴄᴇꜱꜱꜰᴜʟʟʏ ᴅᴇʟᴇᴛᴇᴅ {str(deleted)} ꜰɪʟᴇꜱ ꜰʀᴏᴍ ᴅʙ ꜰᴏʀ ʏᴏᴜʀ ǫᴜᴇʀʏ {keyword}.</b>") 
+        _, keyword = query.data.split("#")
 
+        await query.message.edit_text(
+            f"<b>Fetching files for: <code>{keyword}</code></b>"
+        )
+
+        files, total = await get_bad_files(keyword)
+
+        if not files:
+            return await query.message.edit_text(
+                "<b>No files found.</b>"
+            )
+
+        await query.message.edit_text(
+            f"<b>Found {len(files)} files.\nDeleting in 3 seconds...</b>"
+        )
+        await asyncio.sleep(3)
+
+        try:
+            file_ids = [file.file_id for file in files]
+
+            result1 = await Media.collection.delete_many({
+                "_id": {"$in": file_ids}
+            })
+
+            deleted = result1.deleted_count
+
+            if MULTIPLE_DB:
+                result2 = await Media2.collection.delete_many({
+                    "_id": {"$in": file_ids}
+                })
+                deleted += result2.deleted_count
+
+            LOGGER.info(f"Deleted {deleted} files for keyword: {keyword}")
+
+            await query.message.edit_text(
+                f"<b>✅ Successfully deleted {deleted} files\nfor query: <code>{keyword}</code></b>"
+            )
+
+        except Exception as e:
+            LOGGER.exception("Error in killfilesdq")
+            await query.message.edit_text(
+                "<b>❌ Error occurred while deleting files.</b>"
+		    )
     elif query.data.startswith("show_option"):
         ident, from_user = query.data.split("#")
         btn = [[
