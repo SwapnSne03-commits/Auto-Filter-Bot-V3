@@ -1757,7 +1757,7 @@ async def auto_filter(client, msg, spoll=False):
             url=imdb.get('url', 'N/A'),
             **locals()
         )
-		uid = message.from_user.id if message.from_user else 0
+        uid = message.from_user.id if message.from_user else 0
         temp.IMDB_CAP[uid] = cap
         if not settings.get('button'):
             for file_num, file in enumerate(files, start=1):
