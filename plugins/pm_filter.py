@@ -1705,8 +1705,7 @@ async def auto_filter(client, msg, spoll=False):
         btn.append(
             [InlineKeyboardButton(text="↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭",callback_data="pages")]
         )
-
-	settings = settings or {}
+    settings = settings or {}
     imdb = None
     if settings.get("imdb") and files:
         fname = getattr(files[0], "file_name", None)
