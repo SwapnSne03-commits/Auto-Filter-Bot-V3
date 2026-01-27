@@ -1711,6 +1711,8 @@ async def auto_filter(client, msg, spoll=False):
         fname = getattr(files[0], "file_name", None)
         if fname:
             imdb = await get_poster(search, file=fname)
+            if not isinstance(imdb, dict):
+                imdb = None
     cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
     remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
@@ -1718,11 +1720,12 @@ async def auto_filter(client, msg, spoll=False):
     TEMPLATE = script.IMDB_TEMPLATE_TXT    
     poster_url = None
     if imdb:
-        poster_url = imdb.get("poster")
+        poster_url = imdb.get("poster") if imdb else None
 
         if not poster_url:
-            tmdb_data = await fetch_tmdb_data(search, imdb.get('year') if imdb else None)
-
+            # STEP 3: year safe করে পাঠাও
+            year_val = imdb.get("year") if imdb else None
+            tmdb_data = await fetch_tmdb_data(search, year_val)
             if tmdb_data:
                 poster_url = await get_best_visual(tmdb_data)
     if imdb:
