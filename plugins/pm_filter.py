@@ -1705,7 +1705,13 @@ async def auto_filter(client, msg, spoll=False):
         btn.append(
             [InlineKeyboardButton(text="↭ ɴᴏ ᴍᴏʀᴇ ᴘᴀɢᴇꜱ ᴀᴠᴀɪʟᴀʙʟᴇ ↭",callback_data="pages")]
         )
-    imdb = await get_poster(search, file=(files[0]).file_name) if settings["imdb"] else None
+
+	settings = settings or {}
+    imdb = None
+    if settings.get("imdb") and files:
+        fname = getattr(files[0], "file_name", None)
+        if fname:
+            imdb = await get_poster(search, file=fname)
     cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
     remaining_seconds = "{:.2f}".format(time_difference.total_seconds())
@@ -1713,46 +1719,47 @@ async def auto_filter(client, msg, spoll=False):
     TEMPLATE = script.IMDB_TEMPLATE_TXT    
     poster_url = None
     if imdb:
-        poster_url = imdb.get('poster')
+        poster_url = imdb.get("poster")
 
         if not poster_url:
-            tmdb_data = await fetch_tmdb_data(search, imdb.get('year'))
+            tmdb_data = await fetch_tmdb_data(search, imdb.get('year') if imdb else None)
 
             if tmdb_data:
                 poster_url = await get_best_visual(tmdb_data)
     if imdb:
         cap = TEMPLATE.format(
             qurey=search,
-            title=imdb['title'],
-            votes=imdb['votes'],
-            aka=imdb["aka"],
-            seasons=imdb["seasons"],
-            box_office=imdb['box_office'],
-            localized_title=imdb['localized_title'],
-            kind=imdb['kind'],
-            imdb_id=imdb["imdb_id"],
-            cast=imdb["cast"],
-            runtime=imdb["runtime"],
-            countries=imdb["countries"],
-            certificates=imdb["certificates"],
-            languages=imdb["languages"],
-            director=imdb["director"],
-            writer=imdb["writer"],
-            producer=imdb["producer"],
-            composer=imdb["composer"],
-            cinematographer=imdb["cinematographer"],
-            music_team=imdb["music_team"],
-            distributors=imdb["distributors"],
-            release_date=imdb['release_date'],
-            year=imdb['year'],
-            genres=imdb['genres'],
-            poster=imdb['poster'],
-            plot=imdb['plot'],
-            rating=imdb['rating'],
-            url=imdb['url'],
+            title=imdb.get('title', 'N/A'),
+            votes=imdb.get('votes') or imdb.get('vote_count') or 'N/A',
+            aka=imdb.get("aka", 'N/A'),
+            seasons=imdb.get("seasons", 'N/A'),
+            box_office=imdb.get('box_office', 'N/A'),
+            localized_title=imdb.get('localized_title', 'N/A'),
+            kind=imdb.get('kind', 'N/A'),
+            imdb_id=imdb.get("imdb_id", "N/A"),
+            cast=imdb.get("cast", "N/A"),
+            runtime=imdb.get("runtime", "N/A"),
+            countries=imdb.get("countries", "N/A"),
+            certificates=imdb.get("certificates", "N/A"),
+            languages=imdb.get("languages", "N/A"),
+            director=imdb.get("director", "N/A"),
+            writer=imdb.get("writer", "N/A"),
+            producer=imdb.get("producer", "N/A"),
+            composer=imdb.get("composer", "N/A"),
+            cinematographer=imdb.get("cinematographer", "N/A"),
+            music_team=imdb.get("music_team", "N/A"),
+            distributors=imdb.get("distributors", "N/A"),
+            release_date=imdb.get('release_date', 'N/A'),
+            year=imdb.get('year', 'N/A'),
+            genres=imdb.get('genres', 'N/A'),
+            poster=poster_url,
+            plot=imdb.get('plot', 'N/A'),
+            rating=imdb.get('rating', 'N/A'),
+            url=imdb.get('url', 'N/A'),
             **locals()
         )
-        temp.IMDB_CAP[message.from_user.id] = cap
+		uid = message.from_user.id if message.from_user else 0
+        temp.IMDB_CAP[uid] = cap
         if not settings.get('button'):
             for file_num, file in enumerate(files, start=1):
                 cap += f"\n\n<b>{file_num}. <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>{get_size(file.file_size)} | {clean_filename(file.file_name)}</a></b>"
@@ -1763,72 +1770,49 @@ async def auto_filter(client, msg, spoll=False):
             cap = f"<b><blockquote>Hᴇʏ,{message.from_user.mention}</blockquote>\n\n📂 Hᴇʀᴇ I Fᴏᴜɴᴅ Fᴏʀ Yᴏᴜʀ Sᴇᴀʀᴄʜ <code>{search}</code></b>\n\n"            
             for file_num, file in enumerate(files, start=1):
                 cap += f"<b>{file_num}. <a href='https://telegram.me/{temp.U_NAME}?start=file_{message.chat.id}_{file.file_id}'>{get_size(file.file_size)} | {clean_filename(file.file_name)}\n\n</a></b>"                
+    final_poster = poster_url if poster_url else None
+
     try:
-        if imdb and (poster_url or imdb.get("poster")):
-            try:
-                imdb_poster = imdb.get("poster") if imdb else None
-                final_poster = imdb_poster or poster_url
-                hehe = await message.reply_photo(
-                    photo=final_poster,
-                    caption=cap, 
-                    reply_markup=InlineKeyboardMarkup(btn), 
-                    parse_mode=enums.ParseMode.HTML
-                )
-                await m.delete()
-                if settings['auto_delete']:
-                    await asyncio.sleep(DELETE_TIME)
-                    await hehe.delete()
-                    await message.delete()
-            except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
-                pic = imdb.get('poster')
-                if pic:
-                    poster = pic.replace('.jpg', "._V1_UX360.jpg")
-                    hmm = await message.reply_photo(
-                        photo=poster, 
-                        caption=cap, 
-                        reply_markup=InlineKeyboardMarkup(btn), 
-                        parse_mode=enums.ParseMode.HTML
-                    )
-                    await m.delete()
-                    if settings['auto_delete']:
-                        await asyncio.sleep(DELETE_TIME)
-                        await hmm.delete()
-                        await message.delete()
-                else:
-                    fek = await m.edit_text(
-                        text=cap, 
-                        reply_markup=InlineKeyboardMarkup(btn), 
-                        parse_mode=enums.ParseMode.HTML
-                    )
-                    if settings['auto_delete']:
-                        await asyncio.sleep(DELETE_TIME)
-                        await fek.delete()
-                        await message.delete()
-            except Exception as e:
-                LOGGER.error(e)
-                fek = await m.edit_text(
-                    text=cap, 
-                    reply_markup=InlineKeyboardMarkup(btn), 
-                    parse_mode=enums.ParseMode.HTML
-                )
-                if settings['auto_delete']:
-                    await asyncio.sleep(DELETE_TIME)
-                    await fek.delete()
-                    await message.delete()
-        else:
-            fuk = await m.edit_text(
-                text=cap, 
-                reply_markup=InlineKeyboardMarkup(btn), 
-                disable_web_page_preview=True, 
+        if final_poster:
+            sent = await message.reply_photo(
+                photo=final_poster,
+                caption=cap,
+                reply_markup=InlineKeyboardMarkup(btn),
                 parse_mode=enums.ParseMode.HTML
             )
-            if settings['auto_delete']:
-                await asyncio.sleep(DELETE_TIME)
-                await fuk.delete()
-                await message.delete()
-    except KeyError:
-        await save_group_settings(message.chat.id, 'auto_delete', True)
-        pass
+        else:
+            sent = await message.reply_text(
+                text=cap,
+                reply_markup=InlineKeyboardMarkup(btn),
+                disable_web_page_preview=True,
+                parse_mode=enums.ParseMode.HTML
+            )
+
+        try:
+            await m.delete()
+        except:
+            pass
+
+        if settings.get("auto_delete"):
+            await asyncio.sleep(DELETE_TIME)
+            await sent.delete()
+            await message.delete()
+
+    except (MediaEmpty, PhotoInvalidDimensions, WebpageMediaEmpty):
+        sent = await message.reply_text(
+            text=cap,
+            reply_markup=InlineKeyboardMarkup(btn),
+            disable_web_page_preview=True,
+            parse_mode=enums.ParseMode.HTML
+        )
+        if settings.get("auto_delete"):
+            await asyncio.sleep(DELETE_TIME)
+            await sent.delete()
+            await message.delete()
+			
+    except Exception as e:
+        LOGGER.error(f"Poster send failed: {e}")
+        
 		
 async def ai_spell_check(chat_id, wrong_name):
     async def search_movie(wrong_name):
