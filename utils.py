@@ -59,7 +59,31 @@ class temp(object):
     SHORT = {}
     IMDB_CAP = {}
     VERIFICATIONS = {}
-    
+    DAILY_USAGE = {} 
+
+def today_date():
+    return datetime.now().strftime("%Y-%m-%d")
+
+def check_daily_limit(user_id, limit):
+    today = today_date()
+    data = temp.DAILY_USAGE.get(user_id)
+
+    if not data or data["date"] != today:
+        temp.DAILY_USAGE[user_id] = {"date": today, "count": 0}
+        return True
+
+    return data["count"] < limit
+
+
+def increase_daily_count(user_id):
+    today = today_date()
+    data = temp.DAILY_USAGE.get(user_id)
+
+    if not data or data["date"] != today:
+        temp.DAILY_USAGE[user_id] = {"date": today, "count": 1}
+    else:
+        temp.DAILY_USAGE[user_id]["count"] += 1
+
 def clean_search_query(query: str) -> str:
     query = QUALITY_REGEX.sub('', query)
     query = re.sub(r'\s+', ' ', query).strip()
