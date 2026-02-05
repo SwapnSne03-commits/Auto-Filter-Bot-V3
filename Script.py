@@ -1,6 +1,6 @@
 class script(object):
     START_TXT = """<b>​​​ʜɪɪ {user}, {greet} 👋,\n 
-ɪ ᴀᴍ ᴛʜᴇ ᴍᴏꜱᴛ ᴘᴏᴡᴇʀꜰᴜʟʟ & Aᴅᴠᴀɴᴄᴇᴅ ᴍᴇᴅɪᴀ ᴘʀᴏᴠɪᴅᴇʀ ʙᴏᴛ. ɪ ᴄᴀɴ ᴘʀᴏᴠɪᴅᴇᴅ ᴀʟʟ ʟᴀᴛᴇꜱᴛ ᴍᴏᴠɪᴇꜱ ᴏʀ ꜱᴇʀɪᴇꜱ. ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴍᴇ ᴛʜᴇ ᴄᴏʀʀᴇᴄᴛ ɴᴀᴍᴇ.</b>\n\n<blockquote>❤️‍🔥<b>Mᴀᴅᴇ Bʏ « @Yours_Swap »</b></blockquote>"""
+ɪ ᴀᴍ ᴛʜᴇ ᴍᴏꜱᴛ ᴘᴏᴡᴇʀꜰᴜʟʟ & ᴀᴅᴠᴀɴᴄᴇᴅ ᴍᴇᴅɪᴀ ᴘʀᴏᴠɪᴅᴇʀ ʙᴏᴛ. ɪ ᴄᴀɴ ᴘʀᴏᴠɪᴅᴇᴅ ᴀʟʟ ʟᴀᴛᴇꜱᴛ ᴍᴏᴠɪᴇꜱ ᴏʀ ꜱᴇʀɪᴇꜱ. ᴊᴜꜱᴛ ꜱᴇɴᴅ ᴍᴇ ᴛʜᴇ ᴄᴏʀʀᴇᴄᴛ ɴᴀᴍᴇ.\n\n⚡ Commands:\n• /help → ʜᴏᴡ ᴛᴏ sᴇᴀʀᴄʜ ᴍᴏᴠɪᴇs/sᴇʀɪᴇs ᴜsɪɴɢ ᴍᴇ\n• /request → ʀᴇǫᴜᴇsᴛ ʏᴏᴜʀ ᴍᴏᴠɪᴇ/sᴇʀɪᴇs ᴛᴏ ᴀᴅᴍɪɴs\n\n<blockquote>📌 Note:\nWe only index Telegram files. We do not host content.</b>"""
 
     FEATURES_TXT = """<b>ʜᴇʀᴇ ɪꜱ ᴀʟʟ ᴍʏ ꜰᴜɴᴛɪᴏɴꜱ.</b>"""
 
