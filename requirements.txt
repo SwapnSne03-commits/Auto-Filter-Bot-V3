@@ -31,3 +31,4 @@ python-Levenshtein==0.27.3
 pymediainfo
 python-magic
 langdetect
+pycountry
