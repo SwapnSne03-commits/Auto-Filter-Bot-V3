@@ -79,7 +79,7 @@ async def file_info_handler(client, query):
     if "𝗙𝗜𝗟𝗘 𝗜𝗡𝗙𝗢" in (query.message.caption or ""):
         return await query.answer("Already shown ✅", show_alert=True)
 
-    tmp_path = os.path.join(tempfile.gettempdir(), "fileinfo_temp")
+    tmp_path = os.path.join(tempfile.gettempdir(), f"fileinfo_{query.id}")
 
     try:
         # 🔥 partial download only (FAST + LOW RAM)
@@ -97,8 +97,10 @@ async def file_info_handler(client, query):
         for t in media.tracks:
 
             if t.track_type == "Video":
-                if t.width:
+                if t.width and t.height:
                     resolution = f"{t.width}x{t.height}"
+                elif t.height:
+                    resolution = f"{t.height}p"
                 duration = format_duration(t.duration)
 
             elif t.track_type == "Audio":
@@ -129,6 +131,7 @@ async def file_info_handler(client, query):
 
         old = query.message.caption or ""
         new_caption = f"{old}{pretty_info}"
+        new_caption = new_caption[:1000]
 
         btn = InlineKeyboardMarkup([
             [InlineKeyboardButton("❌ 𝗖𝗹𝗼𝘀𝗲", callback_data="close")]
