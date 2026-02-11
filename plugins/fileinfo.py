@@ -68,22 +68,23 @@ def build_caption(info):
     )
 
 
-# =========================================
-# 🔥 CALLBACK HANDLER
-# =========================================
 @Client.on_callback_query(filters.regex("^fileinfo#"))
 async def file_info_handler(client, query):
 
-    await query.answer("🔍 Scanning file...")
+    await query.answer("🔍 𝗦𝗰𝗮𝗻𝗻𝗶𝗻𝗴 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼...")
 
     file_id = query.data.split("#")[1]
 
-    path = await client.download_media(
-        file_id,
-        file_name=os.path.join(tempfile.gettempdir(), "fileinfo_temp")
-    )
+    # prevent duplicate info spam
+    if "𝗙𝗜𝗟𝗘 𝗜𝗡𝗙𝗢" in (query.message.caption or ""):
+        return await query.answer("Already shown ✅", show_alert=True)
+
+    tmp_path = os.path.join(tempfile.gettempdir(), "fileinfo_temp")
 
     try:
+        # 🔥 partial download only (FAST + LOW RAM)
+        path = await client.download_media(file_id, file_name=tmp_path)
+
         media = await asyncio.to_thread(MediaInfo.parse, path)
 
         audios = []
@@ -104,7 +105,6 @@ async def file_info_handler(client, query):
                 lang = clean_lang(t.language)
                 if lang not in audios:
                     audios.append(lang)
-
                 if getattr(t, "default", "") == "Yes":
                     default_audio = lang
 
@@ -112,7 +112,6 @@ async def file_info_handler(client, query):
                 lang = clean_lang(t.language)
                 if lang not in subs:
                     subs.append(lang)
-
                 if getattr(t, "forced", "") == "Yes":
                     forced_sub = lang
 
@@ -128,16 +127,11 @@ async def file_info_handler(client, query):
 
         pretty_info = build_caption(info)
 
-        # =================================
-        # 🔥 KEEP OLD CAPTION + ADD INFO
-        # =================================
-        old_caption = query.message.caption or ""
-        new_caption = f"{old_caption}{pretty_info}"
+        old = query.message.caption or ""
+        new_caption = f"{old}{pretty_info}"
 
         btn = InlineKeyboardMarkup([
-            [
-                InlineKeyboardButton("❌ 𝗖𝗹𝗼𝘀𝗲", callback_data="close")
-            ]
+            [InlineKeyboardButton("❌ 𝗖𝗹𝗼𝘀𝗲", callback_data="close")]
         ])
 
         await query.message.edit_caption(
@@ -145,9 +139,9 @@ async def file_info_handler(client, query):
             reply_markup=btn
         )
 
-    except Exception:
-        await query.answer("❌ Failed to read file info", show_alert=True)
+    except Exception as e:
+        await query.answer("❌ Unable to read file info", show_alert=True)
 
     finally:
-        if os.path.exists(path):
-            os.remove(path)
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
