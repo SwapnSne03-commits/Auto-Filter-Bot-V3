@@ -73,7 +73,7 @@ async def file_info_handler(client, query):
 
     await query.answer("🔍 𝗦𝗰𝗮𝗻𝗻𝗶𝗻𝗴 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼...")
 
-    file_id = query.data.split("#")[1]
+    
 
     # prevent duplicate info spam
     if "𝗙𝗜𝗟𝗘 𝗜𝗡𝗙𝗢" in (query.message.caption or ""):
@@ -83,7 +83,7 @@ async def file_info_handler(client, query):
 
     try:
         # 🔥 partial download only (FAST + LOW RAM)
-        path = await client.download_media(file_id, file_name=tmp_path)
+        path = await query.message.download(file_name=tmp_path)
 
         media = await asyncio.to_thread(MediaInfo.parse, path)
 
