@@ -2,6 +2,7 @@ import os
 import asyncio
 import tempfile
 import aiofiles
+import pycountry
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -9,20 +10,46 @@ from telegraph import Telegraph
 from pymediainfo import MediaInfo
 
 
+# =========================================
+# 🔹 Telegraph init (safe)
+# =========================================
 telegraph = Telegraph()
 telegraph.create_account(short_name="FileInfoBot")
 
 
-# ======================================
-# format helper
-# ======================================
-def fmt(lang):
-    return lang or "Unknown"
+# =========================================
+# 🔹 Language full name + native name
+# Bengali → Bengali (বাংলা)
+# =========================================
+def get_lang_name(code: str | None) -> str:
+    if not code:
+        return "Unknown"
+
+    code = str(code).lower().strip()
+
+    try:
+        lang = (
+            pycountry.languages.get(alpha_2=code)
+            or pycountry.languages.get(alpha_3=code)
+        )
+
+        if lang:
+            name = lang.name
+            native = getattr(lang, "native", None)
+
+            if native and native != name:
+                return f"{name} ({native})"
+
+            return name
+    except:
+        pass
+
+    return code.upper()
 
 
-# ======================================
-# CALLBACK
-# ======================================
+# =========================================
+# 🔹 CALLBACK
+# =========================================
 @Client.on_callback_query(filters.regex("^trackinfo$"))
 async def telegraph_file_info(client, query):
 
@@ -31,60 +58,124 @@ async def telegraph_file_info(client, query):
     tmp = os.path.join(tempfile.gettempdir(), f"info_{query.id}.tmp")
 
     try:
-        # 🔥 only few MB download (VERY FAST)
+        # ======================================
+        # 🔥 STREAM ONLY 3-5MB (ULTRA SAFE)
+        # ======================================
         async with aiofiles.open(tmp, "wb") as f:
             async for chunk in client.stream_media(query.message, limit=4):
                 await f.write(chunk)
 
         media = await asyncio.to_thread(MediaInfo.parse, tmp)
 
+        video_info = []
         audios = []
         subs = []
-        video = []
 
+        seen_audio = set()
+        seen_subs = set()
+
+        # ======================================
+        # 🔥 Extract tracks
+        # ======================================
         for t in media.tracks:
 
-            if t.track_type == "Video":
-                video.append(f"{t.format} {t.width}x{t.height}")
+            ttype = (t.track_type or "").lower()
 
-            elif t.track_type == "Audio":
-                audios.append(fmt(t.language))
+            # ---------- VIDEO ----------
+            if ttype == "video":
+                codec = t.format or "Unknown"
+                w = t.width or "?"
+                h = t.height or "?"
+                video_info.append(f"{codec} • {w}x{h}")
 
-            elif t.track_type in ("Text", "Subtitle"):
-                subs.append(fmt(t.language))
+            # ---------- AUDIO ----------
+            elif ttype == "audio":
 
-        # =================================
-        # TELEGRAPH PAGE BUILD
-        # =================================
-        html = "<h3>📊 File Tracks Info</h3>"
+                lang = get_lang_name(t.language)
+                key = (lang, t.title)
 
-        if video:
-            html += "<b>Video</b><br>"
-            for v in video:
+                if key not in seen_audio:
+                    seen_audio.add(key)
+
+                    label = lang
+
+                    if getattr(t, "default", "") == "Yes":
+                        label += " ⭐ Default"
+
+                    audios.append(label)
+
+            # ---------- SUBTITLE ----------
+            elif ttype in ("text", "subtitle"):
+
+                lang = get_lang_name(t.language)
+                key = (lang, t.title)
+
+                if key not in seen_subs:
+                    seen_subs.add(key)
+
+                    label = lang
+
+                    if getattr(t, "forced", "") == "Yes":
+                        label += " 🎯 Forced"
+
+                    subs.append(label)
+
+        # ======================================
+        # 🔥 Beautiful HTML UI
+        # ======================================
+        html = """
+        <h2>📊 File Tracks Info</h2>
+        <hr>
+        """
+
+        # VIDEO
+        if video_info:
+            html += "<b>📺 Video</b><br>"
+            for v in video_info:
                 html += f"• {v}<br>"
+            html += "<br>"
 
+        # AUDIO
+        html += f"<b>🔊 Audio Tracks ({len(audios)})</b><br>"
         if audios:
-            html += "<br><b>Audio</b><br>"
-            for a in set(audios):
+            for a in audios:
                 html += f"• {a}<br>"
+        else:
+            html += "None<br>"
+        html += "<br>"
 
+        # SUBTITLE
+        html += f"<b>💬 Subtitle Tracks ({len(subs)})</b><br>"
         if subs:
-            html += "<br><b>Subtitles</b><br>"
-            for s in set(subs):
+            for s in subs:
                 html += f"• {s}<br>"
+        else:
+            html += "None<br>"
 
-        page = telegraph.create_page(
+        html += """
+        <br><hr>
+        <i>Generated by your bot ⚡</i>
+        """
+
+        # ======================================
+        # 🔥 Telegraph page create
+        # ======================================
+        page = await asyncio.to_thread(
+            telegraph.create_page,
             title="File Info",
             html_content=html
         )
 
+        # ======================================
+        # 🔥 Replace button with link
+        # ======================================
         await query.edit_message_reply_markup(
             reply_markup=InlineKeyboardMarkup([
                 [InlineKeyboardButton("📊 View File Info", url=page["url"])]
             ])
         )
 
-    except Exception as e:
+    except Exception:
         await query.answer("❌ Failed to read info", show_alert=True)
 
     finally:
