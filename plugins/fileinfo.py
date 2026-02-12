@@ -68,7 +68,7 @@ def build_caption(info):
     )
 
 
-@Client.on_callback_query(filters.regex("^fileinfo#"))
+@Client.on_callback_query(filters.regex("^fileinfo_"))
 async def file_info_handler(client, query):
 
     await query.answer("🔍 𝗦𝗰𝗮𝗻𝗻𝗶𝗻𝗴 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼...")
