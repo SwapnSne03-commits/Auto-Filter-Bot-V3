@@ -15,10 +15,27 @@ telegraph.create_account(short_name="FileInfoBot")
 
 
 # ======================================
-# 🔥 language short → full + native
-# en -> English
-# bn -> Bengali (বাংলা)
+# 🔥 language formatter (fast + safe)
 # ======================================
+
+
+LOCAL_NAMES = {
+    "Bengali": "বাংলা",
+    "Hindi": "हिन्दी",
+    "Tamil": "தமிழ்",
+    "Telugu": "తెలుగు",
+    "Punjabi": "ਪੰਜਾਬੀ",
+    "Malayalam": "മലയാളം",
+    "Kannada": "ಕನ್ನಡ",
+    "Urdu": "اردو",
+    "Arabic": "العربية",
+    "Chinese": "中文",
+    "Japanese": "日本語",
+    "Korean": "한국어",
+    "Thai": "ไทย"
+}
+
+
 def fmt(code):
     if not code:
         return "Unknown"
@@ -31,19 +48,19 @@ def fmt(code):
             or pycountry.languages.get(alpha_3=code)
         )
 
-        if lang:
-            name = lang.name
-            native = getattr(lang, "native", None)
+        if not lang:
+            return code.upper()
 
-            if native and native != name:
-                return f"{name} ({native})"
+        name = lang.name
+        local = LOCAL_NAMES.get(name)
 
-            return name
+        if local:
+            return f"{name} ({local})"
+
+        return name
+
     except:
-        pass
-
-    return code.upper()
-
+        return code.upper()
 
 # ======================================
 # CALLBACK (unchanged logic)
