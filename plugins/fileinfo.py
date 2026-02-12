@@ -83,7 +83,12 @@ async def file_info_handler(client, query):
 
     try:
         # 🔥 partial download only (FAST + LOW RAM)
-        path = await query.message.download(file_name=tmp_path)
+        file = query.message.document or query.message.video or query.message.audio
+
+        if not file:
+            return await query.answer("Unsupported file ❌", show_alert=True)
+
+        path = await client.download_media(file.file_id, file_name=tmp_path)
 
         media = await asyncio.to_thread(MediaInfo.parse, path)
 
