@@ -32,3 +32,4 @@ pymediainfo
 python-magic
 langdetect
 pycountry
+telegraph
