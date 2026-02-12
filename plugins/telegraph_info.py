@@ -3,6 +3,7 @@ import asyncio
 import tempfile
 import aiofiles
 import pycountry   # ✅ NEW (only addition)
+import time
 
 from pyrogram import Client, filters
 from pyrogram.types import InlineKeyboardMarkup, InlineKeyboardButton
@@ -13,6 +14,12 @@ from pymediainfo import MediaInfo
 telegraph = Telegraph()
 telegraph.create_account(short_name="FileInfoBot")
 
+# ======================================
+# 🔥 click cooldown cache
+# user_id : last_click_time
+# ======================================
+CLICK_CACHE = {}
+COOLDOWN = 20  # seconds
 
 # ======================================
 # 🔥 language formatter (fast + safe)
@@ -51,7 +58,7 @@ def fmt(code):
         if not lang:
             return code.upper()
 
-        name = lang.name
+        name = lang.name.replace(" (macrolanguage)", "").replace(" (Macrolanguage)", "")
         local = LOCAL_NAMES.get(name)
 
         if local:
@@ -67,6 +74,19 @@ def fmt(code):
 # ======================================
 @Client.on_callback_query(filters.regex("^trackinfo$"))
 async def telegraph_file_info(client, query):
+
+    now = time.time()
+    uid = query.from_user.id
+
+    last = CLICK_CACHE.get(uid, 0)
+
+    # 🔥 cooldown check
+    if now - last < COOLDOWN:
+        return await query.answer("⏳ Please wait few seconds...", show_alert=False)
+
+    CLICK_CACHE[uid] = now
+    if len(CLICK_CACHE) > 1000:
+        CLICK_CACHE.clear()
 
     await query.answer("🔍 Scanning file...")
 
