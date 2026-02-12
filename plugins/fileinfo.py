@@ -73,31 +73,20 @@ async def file_info_handler(client, query):
 
     await query.answer("🔍 𝗦𝗰𝗮𝗻𝗻𝗶𝗻𝗴 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼...")
 
-    
-
-    # prevent duplicate info spam
     if "𝗙𝗜𝗟𝗘 𝗜𝗡𝗙𝗢" in (query.message.caption or ""):
         return await query.answer("Already shown ✅", show_alert=True)
 
     tmp_path = os.path.join(tempfile.gettempdir(), f"fileinfo_{query.id}")
 
     try:
-        # 🔥 partial download only (FAST + LOW RAM)
-        file = query.message.document or query.message.video or query.message.audio
-
-        if not file:
-            return await query.answer("Unsupported file ❌", show_alert=True)
-
-        path = await client.download_media(file.file_id, file_name=tmp_path)
+        # ✅ safest + universal
+        path = await query.message.download(file_name=tmp_path)
 
         media = await asyncio.to_thread(MediaInfo.parse, path)
 
-        audios = []
-        subs = []
-        default_audio = None
-        forced_sub = None
-        resolution = "Unknown"
-        duration = "Unknown"
+        audios, subs = [], []
+        default_audio = forced_sub = None
+        resolution = duration = "Unknown"
 
         for t in media.tracks:
 
@@ -112,16 +101,11 @@ async def file_info_handler(client, query):
                 lang = clean_lang(t.language)
                 if lang not in audios:
                     audios.append(lang)
-                if getattr(t, "default", "") == "Yes":
-                    default_audio = lang
 
             elif t.track_type == "Text":
                 lang = clean_lang(t.language)
                 if lang not in subs:
                     subs.append(lang)
-                if getattr(t, "forced", "") == "Yes":
-                    forced_sub = lang
-
 
         info = {
             "resolution": resolution,
@@ -138,16 +122,10 @@ async def file_info_handler(client, query):
         new_caption = f"{old}{pretty_info}"
         new_caption = new_caption[:1000]
 
-        btn = InlineKeyboardMarkup([
-            [InlineKeyboardButton("❌ 𝗖𝗹𝗼𝘀𝗲", callback_data="close")]
-        ])
-
-        await query.message.edit_caption(
-            caption=new_caption,
-            reply_markup=btn
-        )
+        await query.message.edit_caption(new_caption)
 
     except Exception as e:
+        print("FILEINFO ERROR:", e)
         await query.answer("❌ Unable to read file info", show_alert=True)
 
     finally:
