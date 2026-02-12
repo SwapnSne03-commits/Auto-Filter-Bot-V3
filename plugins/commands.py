@@ -418,12 +418,12 @@ async def start(client, message):
                 btn = [
                     [InlineKeyboardButton('𝖦𝖾𝗇𝖾𝗋𝖺𝗍𝖾 𝖲𝗍𝗋𝖾𝗆𝗂𝗇𝗀 𝖫𝗂𝗇𝗄', callback_data=f'streamfile:{file_id}')],
                     [InlineKeyboardButton('𝖴𝗉𝖽𝖺𝗍𝖾 𝖢𝗁𝖺𝗇𝗇𝖾𝗅', url=UPDATE_CHANNEL_LNK)],
-                    [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo"]
+                    [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo")]
                 ]
             else:
                 btn = [
                     [InlineKeyboardButton('𝖴𝗉𝖽𝖺𝗍𝖾 𝖢𝗁𝖺𝗇𝗇𝖾𝗅', url=UPDATE_CHANNEL_LNK)],
-                    [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo"]
+                    [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo")]
                 ]
             msg = await client.send_cached_media(
                 chat_id=message.from_user.id,
@@ -459,12 +459,12 @@ async def start(client, message):
                 btn = [
                     [InlineKeyboardButton('𝖦𝖾𝗇𝖾𝗋𝖺𝗍𝖾 𝖲𝗍𝗋𝖾𝗆𝗂𝗇𝗀 𝖫𝗂𝗇𝗄', callback_data=f'streamfile:{file_id}')],
                     [InlineKeyboardButton('𝖴𝗉𝖽𝖺𝗍𝖾 𝖢𝗁𝖺𝗇𝗇𝖾𝗅', url=UPDATE_CHANNEL_LNK)],
-                    [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo"]           
+                    [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo")]           
                 ]
             else:
                 btn = [
                     [InlineKeyboardButton('𝖴𝗉𝖽𝖺𝗍𝖾 𝖢𝗁𝖺𝗇𝗇𝖾𝗅', url=UPDATE_CHANNEL_LNK)],
-                    [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo"]
+                    [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo")]
                 ]
             msg = await client.send_cached_media(
                 chat_id=message.from_user.id,
@@ -518,12 +518,12 @@ async def start(client, message):
         btn = [
             [InlineKeyboardButton('𝖦𝖾𝗇𝖾𝗋𝖺𝗍𝖾 𝖲𝗍𝗋𝖾𝗆𝗂𝗇𝗀 𝖫𝗂𝗇𝗄', callback_data=f'streamfile:{file_id}')],
             [InlineKeyboardButton('𝖴𝗉𝖽𝖺𝗍𝖾 𝖢𝗁𝖺𝗇𝗇𝖾𝗅', url=UPDATE_CHANNEL_LNK)],
-            [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo"]
+            [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo")]
         ]
     else:
         btn = [
             [InlineKeyboardButton('𝖴𝗉𝖽𝖺𝗍𝖾 𝖢𝗁𝖺𝗇𝗇𝖾𝗅', url=UPDATE_CHANNEL_LNK)],
-            [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo"]
+            [InlineKeyboardButton("📊 𝗚𝗲𝘁 𝗙𝗶𝗹𝗲 𝗜𝗻𝗳𝗼", callback_data="fileinfo")]
         ]
     msg = await client.send_cached_media(
         chat_id=message.from_user.id,
