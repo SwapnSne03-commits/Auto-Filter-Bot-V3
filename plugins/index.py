@@ -16,6 +16,11 @@ lock = asyncio.Lock()
 
 @Client.on_callback_query(filters.regex(r'^index'))
 async def index_files(bot, query):
+    if query.from_user.id not in ADMINS:
+        return await query.answer(
+            "❌ Only admins can perform indexing.",
+            show_alert=True
+        )
     if query.data.startswith('index_cancel'):
         temp.CANCEL = True
         return await query.answer("Cancelling Indexing")
