@@ -26,6 +26,53 @@ from database.topdb import silentdb
 import requests
 import string
 import tracemalloc
+import aiohttp
+import urllib.parse
+
+TMDB_SEARCH_URL = "https://api.themoviedb.org/3/search/multi"
+TMDB_API_KEY = "08345b489d678f754581a74b7343b4c0"
+
+async def tmdb_bulk_search(query: str):
+
+    if not query or len(query) < 3:
+        return []
+
+    params = {
+        "api_key": TMDB_API_KEY,
+        "query": query,
+        "include_adult": "false"
+    }
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(TMDB_SEARCH_URL, params=params, timeout=6) as resp:
+                if resp.status != 200:
+                    return []
+                data = await resp.json()
+    except:
+        return []
+
+    results = data.get("results", [])
+    movies = []
+
+    for item in results[:8]:
+
+        if item.get("media_type") not in ("movie", "tv"):
+            continue
+
+        title = item.get("title") or item.get("name")
+        tmdb_id = item.get("id")
+
+        if not title or not tmdb_id:
+            continue
+
+        movies.append({
+            "title": title,
+            "tmdb_id": tmdb_id
+        })
+
+    return movies
+
 
 tracemalloc.start()
 
@@ -699,28 +746,105 @@ async def filter_season_cb_handler(client: Client, query: CallbackQuery):
 
 @Client.on_callback_query(filters.regex(r"^spol"))
 async def advantage_spoll_choker(bot, query):
+
     _, id, user = query.data.split('#')
+
     if int(user) != 0 and query.from_user.id != int(user):
-        return await query.answer(script.ALRT_TXT.format(query.from_user.first_name), show_alert=True)
-    movies = await get_poster(id, id=True)
-    movie = movies.get('title')
+        return await query.answer(
+            script.ALRT_TXT.format(query.from_user.first_name),
+            show_alert=True
+        )
+
+    # 🔥 Ensure TMDB id format
+    if not id.startswith("tmdb_"):
+        return await query.answer("Invalid ID ❌", show_alert=True)
+
+    tmdb_id = id.replace("tmdb_", "")
+
+    await query.answer(script.TOP_ALRT_MSG)
+
+    # 🔥 Fetch title from TMDB
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"https://api.themoviedb.org/3/movie/{tmdb_id}",
+                params={"api_key": TMDB_API_KEY},
+                timeout=6
+            ) as resp:
+
+                if resp.status != 200:
+                    # Try TV endpoint if movie fails
+                    async with session.get(
+                        f"https://api.themoviedb.org/3/tv/{tmdb_id}",
+                        params={"api_key": TMDB_API_KEY},
+                        timeout=6
+                    ) as tv_resp:
+
+                        if tv_resp.status != 200:
+                            return await query.answer("Movie not found ❌", show_alert=True)
+
+                        data = await tv_resp.json()
+                else:
+                    data = await resp.json()
+
+    except:
+        return await query.answer("TMDB Error ❌", show_alert=True)
+
+    movie = data.get("title") or data.get("name")
+
+    if not movie:
+        return await query.answer("Movie info unavailable ❌", show_alert=True)
+
+    # 🔥 Clean title
     movie = re.sub(r"[:-]", " ", movie)
     movie = re.sub(r"\s+", " ", movie).strip()
-    await query.answer(script.TOP_ALRT_MSG)
-    files, offset, total_results = await get_search_results(query.message.chat.id, movie, offset=0, filter=True)
+
+    files, offset, total_results = await get_search_results(
+        query.message.chat.id,
+        movie,
+        offset=0,
+        filter=True
+    )
+
     if files:
+
         k = (movie, files, offset, total_results)
-        await auto_filter(bot, query, k)
+        await auto_filter(bot, query.message.reply_to_message, k)
+
+        try:
+            await query.message.delete()
+        except:
+            pass
+
     else:
+
         reqstr1 = query.from_user.id if query.from_user else 0
         reqstr = await bot.get_users(reqstr1)
+
         if NO_RESULTS_MSG:
-            await bot.send_message(chat_id=BIN_CHANNEL,text=script.NORSLTS.format(reqstr.id, reqstr.mention, movie))
+            await bot.send_message(
+                chat_id=BIN_CHANNEL,
+                text=script.NORSLTS.format(reqstr.id, reqstr.mention, movie)
+            )
+
         contact_admin_button = InlineKeyboardMarkup(
-            [[InlineKeyboardButton("🔰 Cʟɪᴄᴋ Hᴇʀᴇ & Rᴇǫᴜᴇsᴛ Tᴏ Aᴅᴍɪɴ🔰", url=SUPPORT_GRP)]])
-        k = await query.message.edit(script.MVE_NT_FND,reply_markup=contact_admin_button)
+            [[InlineKeyboardButton(
+                "🔰 Cʟɪᴄᴋ Hᴇʀᴇ & Rᴇǫᴜᴇsᴛ Tᴏ Aᴅᴍɪɴ 🔰",
+                url=SUPPORT_GRP
+            )]]
+        )
+
+        k = await query.message.edit(
+            script.MVE_NT_FND,
+            reply_markup=contact_admin_button
+        )
+
         await asyncio.sleep(10)
-        await k.delete()
+
+        try:
+            await k.delete()
+        except:
+            pass
                 
 @Client.on_callback_query()
 async def cb_handler(client: Client, query: CallbackQuery):
@@ -1817,69 +1941,122 @@ async def auto_filter(client, msg, spoll=False):
         
 		
 async def ai_spell_check(chat_id, wrong_name):
-    async def search_movie(wrong_name):
-        search_results = imdb.search_movie(wrong_name)
-        movie_list = [movie.title for movie in search_results.titles]
-        return movie_list
-    movie_list = await search_movie(wrong_name)
-    if not movie_list:
-        return
-    for _ in range(5):
-        closest_match = process.extractOne(wrong_name, movie_list)
-        if not closest_match or closest_match[1] <= 80:
-            return 
-        movie = closest_match[0]
-        files, offset, total_results = await get_search_results(chat_id=chat_id, query=movie)
-        if files:
-            return movie
-        movie_list.remove(movie)
+
+    if not wrong_name or not isinstance(wrong_name, str):
+        return None
+
+    query = wrong_name.strip()
+
+    # 🔥 Season / Episode request এ spelling check নয়
+    if re.search(r"(s\d{1,2}|season\s*\d{1,2}|e\d{1,3})", query, re.I):
+        return None
+
+    if len(query) < 3:
+        return None
+
+    params = {
+        "api_key": TMDB_API_KEY,
+        "query": query,
+        "include_adult": "false"
+    }
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(TMDB_SEARCH_URL, params=params, timeout=6) as resp:
+                if resp.status != 200:
+                    return None
+                data = await resp.json()
+    except:
+        return None
+
+    results = data.get("results")
+    if not results:
+        return None
+
+    # 🔥 প্রথম valid movie/tv result নাও
+    for item in results[:5]:
+        media_type = item.get("media_type")
+        if media_type not in ("movie", "tv"):
+            continue
+
+        title = item.get("title") or item.get("name")
+        if not title:
+            continue
+
+        # exact match হলে correction লাগবে না
+        if title.lower().strip() == query.lower().strip():
+            return None
+
+        return title
+
+    return None
 
 async def advantage_spell_chok(client, message):
-    mv_id = message.id
+
     search = message.text
     chat_id = message.chat.id
-    settings = await get_settings(chat_id)
+
     query = re.sub(
         r"\b(pl(i|e)*?(s|z+|ease|se|ese|(e+)s(e)?)|((send|snd|giv(e)?|gib)(\sme)?)|movie(s)?|new|latest|br((o|u)h?)*|^h(e|a)?(l)*(o)*|mal(ayalam)?|t(h)?amil|file|that|find|und(o)*|kit(t(i|y)?)?o(w)?|thar(u)?(o)*w?|kittum(o)*|aya(k)*(um(o)*)?|full\smovie|any(one)|with\ssubtitle(s)?)",
-        "", message.text, flags=re.IGNORECASE)
-    query = query.strip() + " movie"
-    try:
-        movies = await get_poster(search, bulk=True)
-    except:
-        k = await message.reply(script.I_CUDNT.format(message.from_user.mention))
-        await asyncio.sleep(60)
-        await k.delete()
-        try:
-            await message.delete()
-        except:
-            pass
+        "", search, flags=re.IGNORECASE
+    ).strip()
+
+    if not query:
         return
+
+    movies = await tmdb_bulk_search(query)
+
     if not movies:
+
         google = search.replace(" ", "+")
         button = [[
-            InlineKeyboardButton("🔍 Cʜᴇᴄᴋ Sᴘᴇʟʟɪɴɢ Oɴ Gᴏᴏɢʟᴇ 🔍", url=f"https://www.google.com/search?q={google}")
+            InlineKeyboardButton(
+                "🔍 Cʜᴇᴄᴋ Sᴘᴇʟʟɪɴɢ Oɴ Gᴏᴏɢʟᴇ 🔍",
+                url=f"https://www.google.com/search?q={google}"
+            )
         ]]
-        k = await message.reply_text(text=script.I_CUDNT.format(search), reply_markup=InlineKeyboardMarkup(button))
+
+        msg = await message.reply_text(
+            text=script.I_CUDNT.format(search),
+            reply_markup=InlineKeyboardMarkup(button)
+        )
+
         await asyncio.sleep(60)
-        await k.delete()
+
         try:
+            await msg.delete()
             await message.delete()
         except:
             pass
+
         return
+
     user = message.from_user.id if message.from_user else 0
-    buttons = [[
-        InlineKeyboardButton(text=movie.title, callback_data=f"spol#{movie.imdb_id}#{user}")
+
+    buttons = [
+        [
+            InlineKeyboardButton(
+                text=m["title"],
+                callback_data=f"spol#tmdb_{m['tmdb_id']}#{user}"
+            )
+        ]
+        for m in movies
     ]
-        for movie in movies
-    ]
+
     buttons.append(
-        [InlineKeyboardButton(text="🚫 ᴄʟᴏsᴇ 🚫", callback_data='close_data')]
+        [InlineKeyboardButton("🚫 ᴄʟᴏsᴇ 🚫", callback_data="close_data")]
     )
-    d = await message.reply_text(text=script.CUDNT_FND.format(message.from_user.mention), reply_markup=InlineKeyboardMarkup(buttons), reply_to_message_id=message.id)
+
+    d = await message.reply_text(
+        text=script.CUDNT_FND.format(message.from_user.mention),
+        reply_markup=InlineKeyboardMarkup(buttons),
+        reply_to_message_id=message.id
+    )
+
     await asyncio.sleep(60)
-    await d.delete()
+
     try:
+        await d.delete()
         await message.delete()
     except:
         pass
