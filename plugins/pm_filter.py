@@ -2975,7 +2975,9 @@ async def ai_spell_check(chat_id, wrong_name):
         return None
 
     query = wrong_name.strip().lower()
-
+    wrong_name = re.sub(r"([a-zA-Z])(\d)", r"\1 \2", wrong_name)
+    clean_query = re.sub(r"\b(19|20)\d{2}\b", "", wrong_name).strip()
+	
     # ✅ cache only success
     cached = SPELL_CACHE.get(query)
     if cached:
@@ -2983,14 +2985,34 @@ async def ai_spell_check(chat_id, wrong_name):
 
     try:
         search_results = imdb.search_movie(wrong_name)
-        titles = [m.title for m in search_results.titles][:8]
+        titles = []
+
+        for m in search_results.titles:
+            title = getattr(m, "title", None)
+            if title and title not in titles:
+                titles.append(title)
+
+        # limit search pool
+        titles = titles[:20]
+
+        # sort by similarity
+        from rapidfuzz import process, fuzz
+
+        best = process.extract(
+            clean_query,
+            titles,
+            scorer=fuzz.token_sort_ratio,
+            limit=5
+        )
+
+        titles = [t[0] for t in best]
     except:
         return None
 
     if not titles:
         return None
 
-    best_match = smart_match(wrong_name, titles)
+    best_match = smart_match(clean_query, titles)
     if not best_match:
         return None
 
