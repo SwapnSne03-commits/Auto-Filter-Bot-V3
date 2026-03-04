@@ -2650,7 +2650,6 @@ async def auto_filter(client, msg, spoll=False):
                 all_files = list(files)
 
                 # 🔹 collect remaining pages
-                if not isinstance(spoll, tuple):
 
                     next_offset = offset
 
@@ -2752,7 +2751,7 @@ async def auto_filter(client, msg, spoll=False):
         )
 
         settings = await get_settings(message.chat.id)
-    key = f"{message.chat.id}-{message.reply_to_message.id if message.reply_to_message else message.id}"
+    #key = f"{message.chat.id}-{message.reply_to_message.id if message.reply_to_message else message.id}"
     FRESH[key] = search
     if SMART_SELECTION_MODE:
         # already stored full result earlier, do nothing
