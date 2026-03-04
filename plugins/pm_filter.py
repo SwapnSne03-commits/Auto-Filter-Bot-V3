@@ -721,7 +721,13 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
                     callback_data="pages"
                 )
             ])
-
+        if qual != "homepage":
+            btn.append([
+                InlineKeyboardButton(
+                    text="⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
+                    callback_data=f"fq#homepage#{key}#0"
+                )
+            ])
         # ================= SEND UPDATE =================
         try:
             if settings.get("button"):
@@ -1078,6 +1084,14 @@ async def filter_language_cb_handler(client: Client, query: CallbackQuery):
                     callback_data="pages"
                 )
             ])
+        # 🔙 Back to main file list
+        if lang != "homepage":
+            btn.append([
+                InlineKeyboardButton(
+                    text="⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
+                    callback_data=f"fl#homepage#{key}#0"
+                )
+            ])
         # ================= SEND UPDATE =================
         try:
             if settings.get("button"):
@@ -1424,7 +1438,13 @@ async def filter_season_cb_handler(client: Client, query: CallbackQuery):
                     callback_data="pages"
                 )
             ])
-
+        if seas != "homepage":
+            btn.append([
+                InlineKeyboardButton(
+                    text="⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ",
+                    callback_data=f"fs#homepage#{key}#0"
+                )
+            ])
         # ================= SEND UPDATE =================
         try:
             if settings.get("button"):
