@@ -3067,8 +3067,9 @@ async def advantage_spell_chok(client, message):
 
         movies = []
 
+        search_query = re.sub(r"\b(19|20)\d{2}\b", "", query).strip()
         try:
-            raw = await get_poster(query, bulk=True)
+            raw = await get_poster(search_query, bulk=True)
         except Exception:
             raw = None
 
@@ -3117,21 +3118,57 @@ async def advantage_spell_chok(client, message):
             # 🔥 remove year for better matching
             clean_query_text = re.sub(r"\b(19|20)\d{2}\b", "", query).strip()
 
+            # 🔥 exact match priority
+            exact_match = None
+
+            for mid, title in titles:
+                if title.lower().strip() == clean_query_text.lower().strip():
+                    exact_match = (mid, title)
+                    break
+
+            if exact_match:
+                movies.append(type("Movie", (), {
+                    "imdb_id": str(exact_match[0]),
+                    "title": exact_match[1]
+                }))
+
+            # 🔥 fuzzy sorting
             sorted_titles = process.extract(
                 clean_query_text,
                 [t[1] for t in titles],
                 scorer=fuzz.token_sort_ratio,
-                limit=6
+                limit=10   # একটু বেশি নাও যাতে filter করার পরও result থাকে
             )
+
+            seen_titles = set()
+            if exact_match:
+                seen_titles.add(exact_match[1].lower())
 
             for name, score, index in sorted_titles:
 
+                # 🔥 similarity guard (avoid unrelated titles)
+                if score < 50:
+                    continue
+
                 mid = titles[index][0]
+
+                # 🔥 avoid duplicate exact match
+                if exact_match and name.lower() == exact_match[1].lower():
+                    continue
+
+                # 🔥 avoid duplicate titles
+                if name.lower() in seen_titles:
+                    continue
+
+                seen_titles.add(name.lower())
 
                 movies.append(type("Movie", (), {
                     "imdb_id": str(mid),
                     "title": name
                 }))
+
+            # 🔥 final limit
+            movies = movies[:6]    
 
         # 🔥 cache save
         if movies:
