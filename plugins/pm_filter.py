@@ -2427,7 +2427,12 @@ async def cb_handler(client: Client, query: CallbackQuery):
         
 async def auto_filter(client, msg, spoll=False):
     cap = ""
-    message = msg   # 🔥 MUST (very important)
+    message = msg
+
+    if isinstance(spoll, tuple):
+        search, files, offset, total_results = spoll
+    else:
+        search = None
 
     if not message or not isinstance(getattr(message, "text", None), str):
         return
@@ -2437,12 +2442,13 @@ async def auto_filter(client, msg, spoll=False):
         if not hasattr(temp, "SMART_FILTERS"):
             temp.SMART_FILTERS = {}
     # ==================================================
-    if not spoll:
+    if not isinstance(spoll, tuple):
         if message.text.startswith("/"): return
         if re.findall("((^\/|^,|^!|^\.|^[\U0001F600-\U000E007F]).*)", message.text):
             return
         if len(message.text) < 100:
-            search = await replace_words(message.text)		
+            if not search:
+                search = await replace_words(message.text)		
             search = search.lower()
             search = search.replace("-", " ")
             search = search.replace(":","")
