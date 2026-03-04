@@ -2462,7 +2462,17 @@ async def auto_filter(client, msg, spoll=False):
             if not is_meaningful_query(search):
                 return
             m=await message.reply_text(f'<b><i>ᴡᴀɪᴛ {message.from_user.mention}, sᴇᴀʀᴄʜɪɴɢ ʏᴏᴜʀ ǫᴜᴇʀʏ: <i>{search}...</i></b>', reply_to_message_id=message.id)
-            files, offset, total_results = await get_search_results(message.chat.id ,search, offset=0, filter=True)
+            
+            if isinstance(spoll, tuple):
+                files, offset, total_results = spoll[1], spoll[2], spoll[3]
+            else:
+                files, offset, total_results = await get_search_results(
+                    message.chat.id,
+                    search,
+                    offset=0,
+                    filter=True
+	            )
+            files = files or []
             # 🔥 APOSTROPHE FALLBACK (second search only if first fails)
             # 🔥 ADVANCED SYMBOL NORMALIZATION FALLBACK
             if not files and re.search(r"[\'\:\.,/]", message.text):
