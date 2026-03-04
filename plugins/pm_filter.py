@@ -392,6 +392,21 @@ async def next_page(bot, query):
                         InlineKeyboardButton("ɴᴇxᴛ ⋟", callback_data=f"next_{req}_{key}_{n_offset}")
                     ],
                 )
+        active = temp.ACTIVE_FILTER.get(key)
+
+        if active:
+            if active["type"] == "language":
+                btn.append([
+                    InlineKeyboardButton("⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ", callback_data=f"fl#homepage#{key}#0")
+                ])
+            elif active["type"] == "season":
+                btn.append([
+                    InlineKeyboardButton("⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ", callback_data=f"fs#homepage#{key}#0")
+                ])
+            elif active["type"] == "quality":
+                btn.append([
+                    InlineKeyboardButton("⋞ ʙᴀᴄᴋ ᴛᴏ ᴍᴀɪɴ ᴘᴀɢᴇ", callback_data=f"fq#homepage#{key}#0")
+                ])
         if not settings.get('button'):
             cur_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
             time_difference = timedelta(hours=cur_time.hour, minutes=cur_time.minute, seconds=(cur_time.second+(cur_time.microsecond/1000000))) - timedelta(hours=curr_time.hour, minutes=curr_time.minute, seconds=(curr_time.second+(curr_time.microsecond/1000000)))
