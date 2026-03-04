@@ -2431,6 +2431,10 @@ async def auto_filter(client, msg, spoll=False):
     cap = ""
     message = msg
 
+    original_query = None
+    fallback_query = None
+    fallback_info = None
+
     if isinstance(spoll, tuple):
         search = spoll[0]
         files = spoll[1]
