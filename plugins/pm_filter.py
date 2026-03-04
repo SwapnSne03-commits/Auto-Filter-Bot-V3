@@ -2917,16 +2917,31 @@ async def auto_filter(client, msg, spoll=False):
                     await fek.delete()
                     await message.delete()
         else:
-            fuk = await m.edit_text(
-                text=cap, 
-                reply_markup=InlineKeyboardMarkup(btn), 
-                disable_web_page_preview=True, 
-                parse_mode=enums.ParseMode.HTML
-            )
+            try:
+                fuk = await m.edit_text(
+                    text=cap,
+                    reply_markup=InlineKeyboardMarkup(btn),
+                    disable_web_page_preview=True,
+                    parse_mode=enums.ParseMode.HTML
+                )
+            except Exception:
+                fuk = await message.reply_text(
+                    text=cap,
+                    reply_markup=InlineKeyboardMarkup(btn),
+                    disable_web_page_preview=True,
+                    parse_mode=enums.ParseMode.HTML
+                )
             if settings['auto_delete']:
                 await asyncio.sleep(DELETE_TIME)
-                await fuk.delete()
-                await message.delete()
+                try:
+                    await fuk.delete()
+                except:
+                    pass
+
+                try:
+                    await message.delete()
+                except:
+                    pass
     except KeyError:
         await save_group_settings(message.chat.id, 'auto_delete', True)
         pass
