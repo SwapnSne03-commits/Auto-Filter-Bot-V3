@@ -2432,9 +2432,15 @@ async def auto_filter(client, msg, spoll=False):
     message = msg
 
     if isinstance(spoll, tuple):
-        search, files, offset, total_results = spoll
+        search = spoll[0]
+        files = spoll[1]
+        offset = spoll[2]
+        total_results = spoll[3]
     else:
         search = None
+        files = []
+        offset = 0
+        total_results = 0
 
     if not message or not isinstance(getattr(message, "text", None), str):
         return
@@ -2631,8 +2637,10 @@ async def auto_filter(client, msg, spoll=False):
                 "current_offset": 0
             }
             # ================= SMART MODE DETECTION =================
+            key = f"{message.chat.id}-{message.reply_to_message.id if message.reply_to_message else message.id}"
+            FRESH[key] = search
             # ================= SMART MODE: COLLECT ALL FILES =================
-            if SMART_SELECTION_MODE:
+            if SMART_SELECTION_MODE and not isinstance(spoll, tuple):
                 smart_languages = set()
                 smart_seasons = set()
                 smart_qualities = set()
@@ -2744,7 +2752,7 @@ async def auto_filter(client, msg, spoll=False):
         )
 
         settings = await get_settings(message.chat.id)
-    key = f"{message.chat.id}-{message.id}"
+    key = f"{message.chat.id}-{message.reply_to_message.id if message.reply_to_message else message.id}"
     FRESH[key] = search
     if SMART_SELECTION_MODE:
         # already stored full result earlier, do nothing
