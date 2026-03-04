@@ -2444,6 +2444,8 @@ async def auto_filter(client, msg, spoll=False):
 
     if not message or not isinstance(getattr(message, "text", None), str):
         return
+    key = f"{message.chat.id}-{message.reply_to_message.id if message.reply_to_message else message.id}"
+	
     curr_time = datetime.now(pytz.timezone('Asia/Kolkata')).time()
     # ================= SMART MODE INIT =================
     if SMART_SELECTION_MODE:
