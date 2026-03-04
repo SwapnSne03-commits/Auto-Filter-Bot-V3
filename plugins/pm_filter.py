@@ -3116,13 +3116,26 @@ async def advantage_spell_chok(client, message):
             from rapidfuzz import process, fuzz
 
             # 🔥 remove year for better matching
-            clean_query_text = re.sub(r"\b(19|20)\d{2}\b", "", query).strip()
-
+            clean_query_text = re.sub(r"\b(19|20)\d{2}\b", "", query).strip().lower()
             # 🔥 exact match priority
             exact_match = None
 
             for mid, title in titles:
-                if title.lower().strip() == clean_query_text.lower().strip():
+                main_title = title.lower().strip()
+                query_title = clean_query_text
+
+                # 1️⃣ exact match
+                if main_title == query_title:
+                    exact_match = (mid, title)
+                    break
+
+                # 2️⃣ partial english match
+                if query_title in main_title:
+                    exact_match = (mid, title)
+                    break
+
+                # 3️⃣ reverse match
+                if main_title in query_title:
                     exact_match = (mid, title)
                     break
 
@@ -3137,37 +3150,52 @@ async def advantage_spell_chok(client, message):
                 clean_query_text,
                 [t[1] for t in titles],
                 scorer=fuzz.token_sort_ratio,
-                limit=10   # একটু বেশি নাও যাতে filter করার পরও result থাকে
+                limit=15
             )
 
             seen_titles = set()
+            english_titles = []
+            other_titles = []
+
             if exact_match:
                 seen_titles.add(exact_match[1].lower())
 
             for name, score, index in sorted_titles:
 
-                # 🔥 similarity guard (avoid unrelated titles)
-                if score < 50:
+                if score < 35:
+                    continue
+
+                title_lower = name.lower()
+
+                if title_lower in seen_titles:
                     continue
 
                 mid = titles[index][0]
 
-                # 🔥 avoid duplicate exact match
-                if exact_match and name.lower() == exact_match[1].lower():
-                    continue
+                # 🔥 detect english titles
+                if re.fullmatch(r"[A-Za-z0-9 :'\-]+", name):
+                    english_titles.append((mid, name))
+                else:
+                    other_titles.append((mid, name))
 
-                # 🔥 avoid duplicate titles
-                if name.lower() in seen_titles:
-                    continue
+                seen_titles.add(title_lower)
 
-                seen_titles.add(name.lower())
 
+            # 🔥 English titles first
+            for mid, name in english_titles:
                 movies.append(type("Movie", (), {
                     "imdb_id": str(mid),
                     "title": name
                 }))
 
-            # 🔥 final limit
+            # 🔥 Other language titles last
+            for mid, name in other_titles:
+                movies.append(type("Movie", (), {
+                    "imdb_id": str(mid),
+                    "title": name
+                }))
+
+
             movies = movies[:6]    
 
         # 🔥 cache save
