@@ -2638,20 +2638,26 @@ async def auto_filter(client, msg, spoll=False):
                 smart_qualities = set()
 
                 # 🔹 start with first page files
+                files = files or []
                 all_files = list(files)
 
                 # 🔹 collect remaining pages
-                next_offset = offset
-                while next_offset:
-                    more_files, next_offset, _ = await get_search_results(
-                        message.chat.id,
-                        search,
-                        offset=next_offset,
-                        filter=True
-                    )
-                    if not more_files:
-                        break
-                    all_files.extend(more_files)
+                if not isinstance(spoll, tuple):
+
+                    next_offset = offset
+
+                    while next_offset:
+                        more_files, next_offset, _ = await get_search_results(
+                            message.chat.id,
+                            search,
+                            offset=next_offset,
+                            filter=True
+                        )
+
+                        if not more_files:
+                            break
+
+                        all_files.extend(more_files)
 
                 # 🔹 analyze ALL files (not only 1st page)
                 for file in all_files:
