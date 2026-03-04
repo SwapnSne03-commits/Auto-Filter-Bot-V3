@@ -3039,7 +3039,7 @@ async def ai_spell_check(chat_id, wrong_name):
 
 async def advantage_spell_chok(client, message):
 
-    # 🔒 absolute safety
+    # 🔒 safety
     if not message.text or not isinstance(message.text, str):
         return
 
@@ -3064,22 +3064,23 @@ async def advantage_spell_chok(client, message):
     movies = POSTER_CACHE.get(cache_key)
 
     if movies is None:
-        if movies is None:
-            movies = [] 
+
+        movies = []
+
         try:
-            raw = await get_poster(query, bulk=False)
+            raw = await get_poster(query, bulk=True)
         except Exception:
             raw = None
 
-        # 🔥 safest normalization (VERY IMPORTANT)
-        #if not raw:
-            #movies = []
-	
-        # 🔥 always convert to iterable
+        # 🔥 iterable safety
         if raw:
             items = raw if isinstance(raw, (list, tuple)) else [raw]
         else:
             items = []
+
+        titles = []
+        seen = set()
+
         for m in items:
 
             mid = None
@@ -3098,13 +3099,41 @@ async def advantage_spell_chok(client, message):
             if not mid or not title:
                 continue
 
-            movies.append(type("Movie", (), {
-                "imdb_id": str(mid),
-                "title": str(title)
-            }))
+            # 🔥 duplicate remove
+            if title.lower() in seen:
+                continue
 
-        movies = movies[:6]
+            seen.add(title.lower())
+            titles.append((mid, title))
 
+        # 🔥 nothing found
+        if not titles:
+            movies = []
+
+        else:
+
+            from rapidfuzz import process, fuzz
+
+            # 🔥 remove year for better matching
+            clean_query_text = re.sub(r"\b(19|20)\d{2}\b", "", query).strip()
+
+            sorted_titles = process.extract(
+                clean_query_text,
+                [t[1] for t in titles],
+                scorer=fuzz.token_sort_ratio,
+                limit=6
+            )
+
+            for name, score, index in sorted_titles:
+
+                mid = titles[index][0]
+
+                movies.append(type("Movie", (), {
+                    "imdb_id": str(mid),
+                    "title": name
+                }))
+
+        # 🔥 cache save
         if movies:
             POSTER_CACHE[cache_key] = movies
 
@@ -3132,15 +3161,15 @@ async def advantage_spell_chok(client, message):
             pass
 
         return
+
     # ===============================
-    # 🔥 build buttons safely
+    # 🔥 build buttons
     # ===============================
     buttons = [
         [InlineKeyboardButton(m.title, callback_data=f"spol#{m.imdb_id}#{user_id}")]
         for m in movies
     ]
-    if not buttons:
-        return
+
     buttons.append([
         InlineKeyboardButton("ᴄʟᴏsᴇ ʟɪsᴛ", callback_data=f"spellclose_secure_x9#{user_id}")
     ])
@@ -3151,8 +3180,9 @@ async def advantage_spell_chok(client, message):
         reply_to_message_id=message.id
     )
 
-    # ✅ auto delete after 25s (non blocking)
+    # 🔥 auto delete
     asyncio.create_task(auto_delete_spell(msg, message))
+    
 
 async def auto_delete_spell(bot_msg, user_msg, delay=25):
     await asyncio.sleep(delay)
