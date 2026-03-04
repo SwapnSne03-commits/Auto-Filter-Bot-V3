@@ -1503,7 +1503,7 @@ async def advantage_spoll_choker(bot, query):
             return await query.answer("Request expired ❌", show_alert=True)
 
         k = (movie, files, offset, total_results)
-        await auto_filter(bot, spell_msg, k)
+        await auto_filter(bot, user_msg, k)
 
     else:
         reqstr1 = query.from_user.id if query.from_user else 0
