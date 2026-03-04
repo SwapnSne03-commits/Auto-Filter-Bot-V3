@@ -1525,9 +1525,9 @@ async def advantage_spoll_choker(bot, query):
 
         msg = await bot.send_message(
             chat_id=chat_id,
-            text=script.MVE_NT_FND,
+            text=f"sᴏʀʀʏ {query.from_user.mention},\n\n{script.MVE_NT_FND}",
             reply_markup=contact_admin_button
-        )
+	    )
 
         await asyncio.sleep(10)
         await msg.delete()
