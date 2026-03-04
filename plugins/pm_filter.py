@@ -1467,15 +1467,17 @@ async def advantage_spoll_choker(bot, query):
         )
     try:
         movies = await get_poster(id, id=True)
-        movie = clean_query(movies.get("title", "")) if movies else None
+        title = movies.get("title") if isinstance(movies, dict) else None
+        movie = clean_query(title) if title else None
     except Exception:
         movies = None
         movie = None
-    return await query.answer(
-        f"sᴏʀʀʏ {query.from_user.first_name},\n"
-        f"ᴄᴏᴜʟᴅɴ'ᴛ ғɪɴᴅ ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛ:\n{clean_query(id)}",
-        show_alert=True
-	)
+    if not movie:
+        return await query.answer(
+            f"sᴏʀʀʏ {query.from_user.first_name},\n"
+            f"ᴄᴏᴜʟᴅɴ'ᴛ ғɪɴᴅ ʏᴏᴜʀ ʀᴇǫᴜᴇsᴛ:\n{clean_query(id)}",
+            show_alert=True
+	    )
     await query.answer(script.TOP_ALRT_MSG)
     
     chat_id = query.message.chat.id
@@ -1501,7 +1503,7 @@ async def advantage_spoll_choker(bot, query):
             return await query.answer("Request expired ❌", show_alert=True)
 
         k = (movie, files, offset, total_results)
-        await auto_filter(bot, user_msg, k)
+        await auto_filter(bot, spell_msg, k)
 
     else:
         reqstr1 = query.from_user.id if query.from_user else 0
