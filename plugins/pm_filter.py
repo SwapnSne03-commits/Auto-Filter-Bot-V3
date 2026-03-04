@@ -2728,8 +2728,62 @@ async def auto_filter(client, msg, spoll=False):
                             filter=True
                         )
 
+                        files = files or []
+
+                        # 🔥 SMART FILTER REBUILD (AI FIX CASE)
+                        if SMART_SELECTION_MODE:
+
+                            smart_languages = set()
+                            smart_seasons = set()
+                            smart_qualities = set()
+
+                            all_files = list(files)
+
+                            next_offset = offset
+
+                            while next_offset:
+                                more_files, next_offset, _ = await get_search_results(
+                                    message.chat.id,
+                                    is_misspelled,
+                                    offset=next_offset,
+                                    filter=True
+                                )
+
+                                if not more_files:
+                                    break
+
+                                all_files.extend(more_files)
+
+                            for file in all_files:
+                                name = (file.file_name or "").lower()
+
+                                for lang_key, data in SMART_LANG_MAP.items():
+                                    for alias in data["aliases"]:
+                                        if re.search(rf"(^|[.\s_-]){alias}([.\s_-]|$)", name):
+                                            smart_languages.add(lang_key)
+                                            break
+
+                                for pattern in SMART_SEASON_REGEX:
+                                    match = re.search(pattern, name)
+                                    if match:
+                                        num = re.search(r"\d{1,2}", match.group())
+                                        if num:
+                                            smart_seasons.add(f"S{int(num.group()):02d}")
+                                        break
+
+                                q = re.search(SMART_QUALITY_REGEX, name)
+                                if q:
+                                    smart_qualities.add(q.group())
+
+                            temp.GETALL[key] = all_files
+                            temp.SMART_FILTERS[key] = {
+                                "languages": sorted(smart_languages),
+                                "seasons": sorted(smart_seasons),
+                                "qualities": sorted(smart_qualities)
+	                        }
                         if files:
                             search = is_misspelled
+                            FRESH[key] = search
                             original_query = is_misspelled
                             fallback_query = None
                             fallback_info = None
