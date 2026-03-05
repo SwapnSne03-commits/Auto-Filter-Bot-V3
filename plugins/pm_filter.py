@@ -184,32 +184,53 @@ async def give_filter(client, message):
 async def pm_text(bot, message):
     bot_id = bot.me.id
     content = message.text
+
+    if not message.from_user:
+        return
+
     user = message.from_user.first_name
     user_id = message.from_user.id
+
     if EMOJI_MODE:
         try:
             await message.react(emoji=random.choice(REACTIONS))
         except Exception:
             pass
+
     maintenance_mode = await db.get_maintenance_status(bot_id)
-    if maintenance_mode and message.from_user.id not in ADMINS:
-        await message.reply_text(f"ɪ ᴀᴍ ᴄᴜʀʀᴇɴᴛʟʏ ᴜɴᴅᴇʀ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ 🛠️. ɪ ᴡɪʟʟ ʙᴇ ʙᴀᴄᴋ ꜱᴏᴏɴ 🔜", disable_web_page_preview=True)
+
+    if maintenance_mode and user_id not in ADMINS:
+        await message.reply_text(
+            "ɪ ᴀᴍ ᴄᴜʀʀᴇɴᴛʟʏ ᴜɴᴅᴇʀ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ 🛠️. ɪ ᴡɪʟʟ ʙᴇ ʙᴀᴄᴋ ꜱᴏᴏɴ 🔜",
+            disable_web_page_preview=True
+        )
         return
+
     if content.startswith(("/", "#")):
-        return  
+        return
+
     try:
         await silentdb.update_top_messages(user_id, content)
-        pm_search = await db.pm_search_status(bot_id)
-        if pm_search:
+
+        pm_search = await db.get_pm_search_status(bot_id)
+
+        # 🔐 Admin bypass (Admins can always search)
+        if pm_search or user_id in ADMINS:
             await auto_filter(bot, message)
         else:
             await message.reply_text(
-             text=f"<b><i>Sᴏʀʀʏ! Yᴏᴜ Cᴀɴɴ'ᴛ Sᴇᴀʀᴄʜ Hᴇʀᴇ 🚫.\nJᴏɪɴ Tʜᴇ Rᴇǫᴜᴇsᴛ Gʀᴏᴜᴘ Fʀᴏᴍ Bᴇʟᴏᴡ Bᴜᴛᴛᴏɴ Aɴᴅ Sᴇᴀʀᴄʜ Tʜᴇʀᴇ !</i></b>",   
-             reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("📝 Rᴇǫᴜᴇsᴛ Gʀᴏᴜᴘ ", url=GRP_LNK)]])
+                text=(
+                    "<b><i>Sᴏʀʀʏ! Yᴏᴜ Cᴀɴɴ'ᴛ Sᴇᴀʀᴄʜ Hᴇʀᴇ 🚫.\n"
+                    "Jᴏɪɴ Tʜᴇ Rᴇǫᴜᴇsᴛ Gʀᴏᴜᴘ Fʀᴏᴍ Bᴇʟᴏᴡ Bᴜᴛᴛᴏɴ "
+                    "Aɴᴅ Sᴇᴀʀᴄʜ Tʜᴇʀᴇ!</i></b>"
+                ),
+                reply_markup=InlineKeyboardMarkup(
+                    [[InlineKeyboardButton("📝 Rᴇǫᴜᴇsᴛ Gʀᴏᴜᴘ", url=GRP_LNK)]]
+                )
             )
-    except Exception as e:
-        LOGGER.error(f"An error occurred: {str(e)}")
 
+    except Exception as e:
+        LOGGER.error(f"An error occurred in pm_text: {str(e)}")
 
 @Client.on_callback_query(filters.regex(r"^reffff"))
 async def refercall(bot, query):
