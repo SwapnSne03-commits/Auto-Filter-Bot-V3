@@ -158,7 +158,10 @@ async def give_filter(client, message):
     if maintenance_mode and message.from_user.id not in ADMINS:
         await message.reply_text(f"ɪ ᴀᴍ ᴄᴜʀʀᴇɴᴛʟʏ ᴜɴᴅᴇʀ ᴍᴀɪɴᴛᴇɴᴀɴᴄᴇ 🛠️. ɪ ᴡɪʟʟ ʙᴇ ʙᴀᴄᴋ ꜱᴏᴏɴ 🔜", disable_web_page_preview=True)
         return
-    await silentdb.update_top_messages(message.from_user.id, message.text)
+    user_id = message.from_user.id if message.from_user else None
+
+    if user_id:
+        await silentdb.update_top_messages(user_id, message.text)
     if message.chat.id != SUPPORT_CHAT_ID:
         settings = await get_settings(message.chat.id)
         if settings['auto_ffilter']:
@@ -506,7 +509,7 @@ async def smart_qualities_cb(client: Client, query: CallbackQuery):
 			 )
         if key not in temp.SMART_FILTERS:
             return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ.",
                 show_alert=True
             )
 
@@ -515,7 +518,7 @@ async def smart_qualities_cb(client: Client, query: CallbackQuery):
 
         if not qualities:
             return await query.answer(
-                "❌ No quality available",
+                "sᴏʀʀʏ!!\nǫᴜᴀʟɪᴛʏ ɪs ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ ғᴏʀ ᴛʜɪs ʀᴇsᴜʟᴛ.",
                 show_alert=True
             )
 
@@ -570,7 +573,7 @@ async def filter_qualities_cb_handler(client: Client, query: CallbackQuery):
 
         if owner_id is None:
              return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
                 show_alert=True
             )
 
@@ -793,7 +796,7 @@ async def old_languages_cb(client: Client, query: CallbackQuery):
         search = FRESH.get(key)
         if not search:
             return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
                 show_alert=True
             )
 
@@ -845,7 +848,7 @@ async def smart_languages_cb(client: Client, query: CallbackQuery):
 
         if owner_id is None:
              return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
                 show_alert=True
             )
 
@@ -856,7 +859,7 @@ async def smart_languages_cb(client: Client, query: CallbackQuery):
 			 )
         if key not in temp.SMART_FILTERS:
             return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
                 show_alert=True
             )
 
@@ -925,7 +928,7 @@ async def filter_language_cb_handler(client: Client, query: CallbackQuery):
 
         if owner_id is None:
              return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
                 show_alert=True
             )
 
@@ -1205,7 +1208,7 @@ async def smart_seasons_cb(client: Client, query: CallbackQuery):
 
         if owner_id is None:
              return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
                 show_alert=True
             )
 
@@ -1216,7 +1219,7 @@ async def smart_seasons_cb(client: Client, query: CallbackQuery):
 			 )
         if key not in temp.SMART_FILTERS:
             return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
                 show_alert=True
             )
 
@@ -1224,7 +1227,7 @@ async def smart_seasons_cb(client: Client, query: CallbackQuery):
 
         if not data:
             return await query.answer(
-                "❌ No season available",
+                "sᴇᴀsᴏɴ ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ ғᴏʀ ᴛʜɪs ʀᴇsᴜʟᴛ",
                 show_alert=True
             )
 
@@ -1287,7 +1290,7 @@ async def filter_season_cb_handler(client: Client, query: CallbackQuery):
 
         if owner_id is None:
              return await query.answer(
-                "❌ Session expired, please search again",
+                "❌ sᴇssɪᴏɴ ᴇxᴘɪʀᴇᴅ,\nᴘʟᴇᴀsᴇ sᴇᴀʀᴄʜ ᴀɢᴀɪɴ",
                 show_alert=True
             )
 
@@ -2608,7 +2611,7 @@ async def auto_filter(client, msg, spoll=False):
                             fallback_query = season_only
                             original_query = season_only
                             search = season_only
-                            fallback_info = "Episode not found. Showing season results."
+                            fallback_info = "ᴇᴘɪsᴏᴅᴇ ɴᴏᴛ ғᴏᴜɴᴅ. sʜᴏᴡɪɴɢ ᴀʟʟ sᴇᴀsᴏɴs."
 
                 # 2️⃣ Season → Title
                 if not files and is_series_request:
@@ -2630,7 +2633,7 @@ async def auto_filter(client, msg, spoll=False):
                             fallback_query = title_only
                             original_query = title_only
                             search = title_only
-                            fallback_info = "Season not available. Showing all available results."
+                            fallback_info = "ʀᴇǫᴜᴇsᴛᴇᴅ sᴇᴀsᴏɴ ɴᴏᴛ ᴀᴠᴀɪʟᴀʙʟᴇ. sʜᴏᴡɪɴɢ ᴀʟʟ ᴀᴠᴀɪʟᴀʙʟᴇ ʀᴇsᴜʟᴛs."
 
                 # 3️⃣ Wrong Year fallback
                 if not files and has_year:
@@ -2649,7 +2652,7 @@ async def auto_filter(client, msg, spoll=False):
                             fallback_query = title_without_year
                             original_query = title_without_year   # 🔥 ADD THIS
                             search = title_without_year       
-                            fallback_info = f"No results for that year. Showing results for '{title_without_year}'."
+                            fallback_info = f"ɴᴏ ʀᴇsᴜʟᴛs ғᴏʀ ᴛʜᴀᴛ ʏᴇᴀʀ. sʜᴏᴡɪɴɢ ʀᴇsᴜʟᴛs ғᴏʀ '{title_without_year}'."
             uid = message.from_user.id if message.from_user else 0
             key = f"{message.chat.id}-{message.id}"
             if not hasattr(temp, "OWNER"):
