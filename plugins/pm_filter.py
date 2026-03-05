@@ -212,7 +212,7 @@ async def pm_text(bot, message):
     try:
         await silentdb.update_top_messages(user_id, content)
 
-        pm_search = await db.get_pm_search_status(bot_id)
+        pm_search = await db.pm_search_status(bot_id)
 
         # 🔐 Admin bypass (Admins can always search)
         if pm_search or user_id in ADMINS:
